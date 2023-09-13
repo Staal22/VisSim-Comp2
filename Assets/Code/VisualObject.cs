@@ -9,17 +9,7 @@ public class VisualObject : MonoBehaviour
     public Vertex[] Vertices { get; }
     public int[] Indices { get; private set; }
     public int[] Neighbours { get; private set; }
-    
-    VisualObject()
-    {
-        Vertices = Array.Empty<Vertex>();
-        Indices = Array.Empty<int>();
-    }
-    public VisualObject(Vertex[] vertices, int[] indices)
-    {
-        Vertices = vertices;
-        Indices = indices;
-    }
+
     
     // public void Draw()
     // {

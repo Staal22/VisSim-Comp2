@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,15 +12,13 @@ public class TriangleSurface : VisualObject
     [SerializeField] private TextAsset file;
     private MeshFilter _meshFilter;
     private MeshCollider _meshCollider;
-    
-    public TriangleSurface(Vertex[] vertices, int[] indices) : base(vertices, indices)
-    {
-    }
+    private List<Vector3[]> _triangles;
     
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshCollider = GetComponent<MeshCollider>();
+        _triangles = new List<Vector3[]>();
     }
     private void Start()
     {
@@ -30,7 +27,7 @@ public class TriangleSurface : VisualObject
         GeometryFromStream(reader);
     }
     
-    public void GeometryFromStream(StreamReader reader)
+    private void GeometryFromStream(StreamReader reader)
     {
         if (reader == null)
         {
@@ -95,5 +92,36 @@ public class TriangleSurface : VisualObject
         
         _meshFilter.mesh = newMesh;
         // _meshFilter.mesh.colors = colors;
+        
+        UpdateTriangles();
+    }
+    
+    public int FindTriangle(Vector3 point)
+    {
+        if (_triangles.Count == 0)
+            return -1;
+        for (int i = 0; i < _triangles.Count; i++)
+        {
+            Vector3 barycentricCoordinates = Utilities.Barycentric(
+                _triangles[i][0],
+                _triangles[i][1],
+                _triangles[i][2],
+                point
+            );
+            if (Utilities.IsInsideTriangle(barycentricCoordinates))
+            {
+                return i; // return the index of the triangle the point is in
+            }
+        }
+        return -1; // point is not within any triangle
+    }
+
+    private void UpdateTriangles()
+    {
+        Mesh mesh = _meshFilter.mesh;
+        for (int i = 0; i < mesh.triangles.Length; i+=3)
+        {
+            _triangles.Add(new []{ mesh.vertices[mesh.triangles[i]], mesh.vertices[mesh.triangles[i+1]], mesh.vertices[mesh.triangles[i+2]]});
+        }
     }
 }
