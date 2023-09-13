@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 public class TriangleSurface : VisualObject
@@ -10,10 +11,12 @@ public class TriangleSurface : VisualObject
     // file to read from
     [SerializeField] private TextAsset file;
     private MeshFilter _meshFilter;
+    private MeshCollider _meshCollider;
 
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
+        _meshCollider = GetComponent<MeshCollider>();
     }
 
     private void Start()
@@ -57,25 +60,43 @@ public class TriangleSurface : VisualObject
 
         reader.Close();
         
-        // If there is no meshFilter component attached to the gameObject, add one.
-        if (_meshFilter == null)
-        {
-            _meshFilter = gameObject.AddComponent<MeshFilter>();
-        }
-        
         Mesh newMesh = new Mesh();
 
-        newMesh.vertices = vertices.Select(v => v.Position).ToArray();
+        newMesh.vertices = vertices.Select(v => v.Position).ToArray();;
         newMesh.triangles = indices.ToArray();
-
-        // Re-calculate normals for correct shading
+        
+        // Re-calculate normals and bounds
         newMesh.RecalculateNormals();
         newMesh.RecalculateBounds();
-        
-        if (_meshFilter.mesh != null)
+
+        Destroy(_meshCollider);
+        List<MeshCollider> colliders = new List<MeshCollider>();
+        for (int i = 0; i < newMesh.triangles.Length; i += 3)
         {
-            _meshFilter.mesh.Clear();
+            Vector3[] triangleVertices = new Vector3[3]
+            {
+                newMesh.vertices[newMesh.triangles[i]],
+                newMesh.vertices[newMesh.triangles[i + 1]],
+                newMesh.vertices[newMesh.triangles[i + 2]]
+            };
+
+            Mesh triangleMesh = new Mesh();
+            triangleMesh.vertices = triangleVertices;
+            triangleMesh.triangles = new int[] { 0, 1, 2 };
+
+            MeshCollider triangleCollider = gameObject.AddComponent<MeshCollider>();
+            triangleCollider.sharedMesh = triangleMesh;
+
+            colliders.Add(triangleCollider);
         }
+
+        
+        
         _meshFilter.mesh = newMesh;
+        // if (_meshCollider != null) 
+        // {
+        //     _meshCollider.sharedMesh = newMesh;
+        // }
+        
     }
 }
