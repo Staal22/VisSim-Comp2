@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,23 +13,21 @@ public class TriangleSurface : VisualObject
     [SerializeField] private TextAsset file;
     private MeshFilter _meshFilter;
     private MeshCollider _meshCollider;
-
+    
+    public TriangleSurface(Vertex[] vertices, int[] indices) : base(vertices, indices)
+    {
+    }
+    
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshCollider = GetComponent<MeshCollider>();
     }
-
     private void Start()
     {
         using var stream = new StreamReader(new MemoryStream(file.bytes));
         using var reader = new StreamReader(stream.BaseStream);
         GeometryFromStream(reader);
-    }
-
-
-    public TriangleSurface(Vertex[] vertices, int[] indices) : base(vertices, indices)
-    {
     }
     
     public void GeometryFromStream(StreamReader reader)
@@ -70,7 +69,7 @@ public class TriangleSurface : VisualObject
         newMesh.RecalculateBounds();
 
         Destroy(_meshCollider);
-        List<MeshCollider> colliders = new List<MeshCollider>();
+        
         for (int i = 0; i < newMesh.triangles.Length; i += 3)
         {
             Vector3[] triangleVertices = new Vector3[3]
@@ -86,17 +85,15 @@ public class TriangleSurface : VisualObject
 
             MeshCollider triangleCollider = gameObject.AddComponent<MeshCollider>();
             triangleCollider.sharedMesh = triangleMesh;
-
-            colliders.Add(triangleCollider);
         }
-
         
-        
-        _meshFilter.mesh = newMesh;
-        // if (_meshCollider != null) 
+        // Color[] colors = new Color[newMesh.vertices.Length];
+        // for (int i = 0; i < newMesh.vertices.Length; i++)
         // {
-        //     _meshCollider.sharedMesh = newMesh;
+        //     colors[i] = Color.Lerp(Color.red, Color.green, newMesh.vertices[i].y);
         // }
         
+        _meshFilter.mesh = newMesh;
+        // _meshFilter.mesh.colors = colors;
     }
 }
