@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class RollingBall : MonoBehaviour
@@ -22,19 +23,7 @@ public class RollingBall : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // calculate acceleration
-        var gravity = Physics.gravity;
-        var acceleration = gravity;
-        // calculate velocity
-        var velocity = _oldVelocity + acceleration * Time.fixedDeltaTime;
-        _oldVelocity = velocity;
-        // calculate position
-        var position = transform.position + velocity * Time.fixedDeltaTime;
-        // // move to new position
-        // transform.position = position;
-        
-        _rb.AddForce(acceleration, ForceMode.Acceleration);
-        
+        Vector3 unitNormal = Vector3.zero;
         if (Physics.Raycast(transform.position, Vector3.down, out var hit, 5f))
         {
             if (hit.transform.gameObject.TryGetComponent<TriangleSurface>(out var triangleSurface))
@@ -43,7 +32,26 @@ public class RollingBall : MonoBehaviour
                 if (_triangle != -1)
                     Debug.Log("Rolling on triangle " + _triangle);
             }
+
+            unitNormal = hit.normal;
+            unitNormal = unitNormal.normalized;
         }
+        
+        // gravity
+        var gravity = Physics.gravity * _rb.mass;
+        // surface normal
+        var surfaceNormal = Vector3.Dot(gravity, unitNormal) * unitNormal;
+        // acceleration
+        var acceleration = (gravity + surfaceNormal)/_rb.mass;
+        // velocity
+        var velocity = _oldVelocity + acceleration * Time.fixedDeltaTime;
+        _oldVelocity = velocity;
+        // position
+        var position = transform.position + velocity * Time.fixedDeltaTime;
+        // // move
+        // transform.position = position;
+        
+        _rb.AddForce(acceleration, ForceMode.Acceleration);
     }
 
     private void OnCollisionEnter(Collision other)
