@@ -40,10 +40,10 @@ public class Vertex
         return new Vertex(position, normal, uv);
     }
     
-    public override string ToString()
-    {
-        return $"({Position.x}, {Position.y}, {Position.z}) " +
-               $"({Normal.x}, {Normal.y}, {Normal.z}) " +
-               $"({Uv.x}, {Uv.y})";
-    }
+    // public override string ToString()
+    // {
+    //     return $"({Position.x}, {Position.y}, {Position.z}) " +
+    //            $"({Normal.x}, {Normal.y}, {Normal.z}) " +
+    //            $"({Uv.x}, {Uv.y})";
+    // }
 }

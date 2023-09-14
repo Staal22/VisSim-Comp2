@@ -10,15 +10,17 @@ public class TriangleSurface : VisualObject
 {
     // file to read from
     [SerializeField] private TextAsset file;
+    public List<Vector3[]> Triangles;
+    private Mesh _mesh;
     private MeshFilter _meshFilter;
     private MeshCollider _meshCollider;
-    private List<Vector3[]> _triangles;
     
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshCollider = GetComponent<MeshCollider>();
-        _triangles = new List<Vector3[]>();
+        Triangles = new List<Vector3[]>();
+        _mesh = _meshFilter.mesh;
     }
     private void Start()
     {
@@ -91,6 +93,7 @@ public class TriangleSurface : VisualObject
         // }
         
         _meshFilter.mesh = newMesh;
+        _mesh = _meshFilter.mesh;
         // _meshFilter.mesh.colors = colors;
         
         UpdateTriangles();
@@ -98,14 +101,14 @@ public class TriangleSurface : VisualObject
     
     public int FindTriangle(Vector3 point)
     {
-        if (_triangles.Count == 0)
+        if (Triangles.Count == 0)
             return -1;
-        for (int i = 0; i < _triangles.Count; i++)
+        for (int i = 0; i < Triangles.Count; i++)
         {
             Vector3 barycentricCoordinates = Utilities.Barycentric(
-                _triangles[i][0],
-                _triangles[i][1],
-                _triangles[i][2],
+                Triangles[i][0],
+                Triangles[i][1],
+                Triangles[i][2],
                 point
             );
             if (Utilities.IsInsideTriangle(barycentricCoordinates))
@@ -118,10 +121,9 @@ public class TriangleSurface : VisualObject
 
     private void UpdateTriangles()
     {
-        Mesh mesh = _meshFilter.mesh;
-        for (int i = 0; i < mesh.triangles.Length; i+=3)
+        for (int i = 0; i < _mesh.triangles.Length; i+=3)
         {
-            _triangles.Add(new []{ mesh.vertices[mesh.triangles[i]], mesh.vertices[mesh.triangles[i+1]], mesh.vertices[mesh.triangles[i+2]]});
+            Triangles.Add(new []{ _mesh.vertices[_mesh.triangles[i]], _mesh.vertices[_mesh.triangles[i+1]], _mesh.vertices[_mesh.triangles[i+2]]});
         }
     }
 }
