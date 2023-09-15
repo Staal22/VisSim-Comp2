@@ -8,7 +8,6 @@ using UnityEngine;
 
 public class TriangleSurface : VisualObject
 {
-    // file to read from
     [SerializeField] private TextAsset file;
     public List<Vector3[]> Triangles;
     private Mesh _mesh;
@@ -77,20 +76,20 @@ public class TriangleSurface : VisualObject
                 newMesh.vertices[newMesh.triangles[i + 1]],
                 newMesh.vertices[newMesh.triangles[i + 2]]
             };
-
+        
             Mesh triangleMesh = new Mesh();
             triangleMesh.vertices = triangleVertices;
             triangleMesh.triangles = new int[] { 0, 1, 2 };
-
+        
             MeshCollider triangleCollider = gameObject.AddComponent<MeshCollider>();
             triangleCollider.sharedMesh = triangleMesh;
         }
         
-        // Color[] colors = new Color[newMesh.vertices.Length];
-        // for (int i = 0; i < newMesh.vertices.Length; i++)
-        // {
-        //     colors[i] = Color.Lerp(Color.red, Color.green, newMesh.vertices[i].y);
-        // }
+        Color[] colors = new Color[newMesh.vertices.Length];
+        for (int i = 0; i < newMesh.vertices.Length; i++)
+        {
+            colors[i] = Color.Lerp(Color.red, Color.green, newMesh.vertices[i].y);
+        }
         
         _meshFilter.mesh = newMesh;
         _mesh = _meshFilter.mesh;
