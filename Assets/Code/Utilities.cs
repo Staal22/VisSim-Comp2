@@ -33,10 +33,8 @@ public static class Utilities
         return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
     }
     
-    // Calculate Barycentric coordinates
     public static Vector3 Barycentric(Vector3 a, Vector3 b, Vector3 c, Vector3 p)
     {
-        // Implement Barycentric coordinate calculation
         Vector3 v0 = b - a, v1 = c - a, v2 = p - a;
         float d00 = Vector3.Dot(v0, v0);
         float d01 = Vector3.Dot(v0, v1);

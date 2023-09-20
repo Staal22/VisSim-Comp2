@@ -12,6 +12,7 @@ public class RollingBall : MonoBehaviour
     private int _nextTriangle = 0;
     private float _radius;
     private bool _rolling;
+    private bool _rollingDown;
     private float _height;
     private Vector3 _oldVelocity;
 
@@ -28,6 +29,10 @@ public class RollingBall : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (triangleSurface == null)
+            return;
+        
+        _rollingDown = false;
         var unitNormal = Vector3.zero;
         var triangles = triangleSurface.Triangles;
         
@@ -42,25 +47,10 @@ public class RollingBall : MonoBehaviour
             unitNormal = Vector3.Cross(edge1, edge2).normalized;
             
             Vector3 point = triangles[_triangle][0];
-            // _height = point.y;
             var p = transform.position - point;
-            // project p onto unit normal
             var y = Vector3.Dot(p, unitNormal) * unitNormal;
-            _rolling = y.magnitude <= _radius;
+            _rolling = y.magnitude < _radius;
             Debug.Log("Rolling: " + _rolling);
-            if (_rolling)
-            {
-                // find plane height from barycentric coordinates
-                var barycentricCoordinates = Utilities.Barycentric(
-                    triangles[_triangle][0],
-                    triangles[_triangle][1],
-                    triangles[_triangle][2],
-                    transform.position
-                );
-                _height = barycentricCoordinates.x * triangles[_triangle][0].y +
-                          barycentricCoordinates.y * triangles[_triangle][1].y +
-                          barycentricCoordinates.z * triangles[_triangle][2].y;
-            }
         }
         else
         {
@@ -82,8 +72,9 @@ public class RollingBall : MonoBehaviour
         // Draw debug line for velocity
         Debug.DrawRay(transform.position, velocity, Color.green);
 
-        Vector3 nextPosition = transform.position + velocity * Time.fixedDeltaTime;
-        _nextTriangle = triangleSurface.FindTriangle(nextPosition);
+        var position = transform.position + velocity * Time.fixedDeltaTime;
+        
+        _nextTriangle = triangleSurface.FindTriangle(position);
         if (_nextTriangle != _triangle && _nextTriangle != -1 && _triangle != -1)
         {
             var nextTriangleNormal = Vector3.Cross(triangles[_nextTriangle][1] - triangles[_nextTriangle][0],
@@ -91,28 +82,41 @@ public class RollingBall : MonoBehaviour
             var triangleNormal = Vector3.Cross(triangles[_triangle][1] - triangles[_triangle][0],
                 triangles[_triangle][2] - triangles[_triangle][0]).normalized;
             var reflectionNormal = (nextTriangleNormal + triangleNormal).normalized;
-            
-            var edge1 = triangles[_nextTriangle][1] - triangles[_nextTriangle][0];
-            var edge2 = triangles[_nextTriangle][2] - triangles[_nextTriangle][0];
-            unitNormal = Vector3.Cross(edge1, edge2).normalized;
-            
-            Vector3 point = triangles[_nextTriangle][0];
-            var p = nextPosition - point;
-            Debug.DrawRay(point, p, Color.blue);
-            // UnityEditor.EditorApplication.isPaused = true;
-            var y = Vector3.Dot(p, unitNormal) * unitNormal;
-            var crash = y.magnitude < _radius;
-            
-            // if(Vector3.Cross(nextTriangleNormal, triangleNormal) > )
+
+            var crash = Vector3.Cross(nextTriangleNormal, triangleNormal).y > 0;
             
             if (crash)
                 velocity -= 2 * Vector3.Dot(velocity, reflectionNormal) * reflectionNormal;
+            else
+                _rolling = false;
         }
+
+        if (_rolling)
+        {
+            _rollingDown = Vector3.Dot(velocity, unitNormal) < 0;
+            
+            // Debug draw triangle normal
+            Vector3 center = (triangles[_triangle][0] + triangles[_triangle][1] + triangles[_triangle][2]) / 3; // Calculate the center of the triangle
+            Debug.DrawLine(center, center + unitNormal, Color.yellow);
+
+            // Don't correct position when not pushing into surface.
+            if (_rollingDown)
+            {
+                // Find plane height from barycentric coordinates.
+                var barycentricCoordinates = Utilities.Barycentric(
+                    triangles[_triangle][0],
+                    triangles[_triangle][1],
+                    triangles[_triangle][2],
+                    position
+                );
+        
+                _height = barycentricCoordinates.x * triangles[_triangle][0].y +
+                          barycentricCoordinates.y * triangles[_triangle][1].y +
+                          barycentricCoordinates.z * triangles[_triangle][2].y;
+            }
+        }
+        // magic number because barycentric does not account for correct point of the ball when projecting ball onto the triangle
+        transform.position = _rollingDown ? new Vector3(position.x, _height + _radius - 0.3f , position.z) : position;
         _oldVelocity = velocity;
-        
-        
-        var position = transform.position + velocity * Time.fixedDeltaTime;
-        transform.position = position;
-        // transform.position = _rolling ? new Vector3(position.x, _height + _radius, position.z) : position;
     }
 }
