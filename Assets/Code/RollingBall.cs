@@ -10,6 +10,7 @@ public class RollingBall : MonoBehaviour
     private const float Mass = 1;
     private int _triangle = 0;
     private int _nextTriangle = 0;
+    private int _stepCounter = 0;
     private float _radius;
     private bool _rolling;
     private bool _rollingDown;
@@ -118,5 +119,18 @@ public class RollingBall : MonoBehaviour
         // magic number because barycentric does not account for correct point of the ball when projecting ball onto the triangle
         transform.position = _rollingDown ? new Vector3(position.x, _height + _radius - 0.3f , position.z) : position;
         _oldVelocity = velocity;
+
+        ++_stepCounter;
+        if (_stepCounter == 100)
+        {
+            // debug information at 2 seconds
+            Debug.Log("##### 2 seconds debug log start #####");
+            Debug.Log("Triangle normal: " + unitNormal);
+            Debug.Log("Acceleration: " + acceleration);
+            Debug.Log("Velocity: " + velocity);
+            Debug.Log("Position: " + transform.position);
+            Debug.Log("##### 2 seconds debug log end #####");
+            // UnityEditor.EditorApplication.isPaused = true;
+        }
     }
 }
